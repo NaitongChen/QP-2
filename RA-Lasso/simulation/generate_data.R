@@ -1,4 +1,4 @@
-setwd("~/simulation")
+# setwd("~/simulation")
 N = 100
 n = 100
 p = 400
