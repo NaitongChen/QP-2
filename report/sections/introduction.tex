@@ -1,0 +1,9 @@
+% !TEX root = ../main.tex
+
+% Summary section
+
+\section{Introduction}
+Linear regression is an easy-to-use and highly interpretable statistical inference method that has found itself in a wide range of applications. In the fields such as genomics and proteomics, we are often presented with high dimensional problems where the number of predictors is much greater than the number of observations. In such settings, linear regression in its simplest form may not have a unique solution, and so directly applying this method may not yield outputs that are interpretable for statistical inference. While a number of methods have been developed to address this issue, the corresponding theoretical guarantees on the inference quality for most of these methods rely on the assumption that the error distribution is symmetric and light-tailed. However, these assumptions may not be reasonable in practice, thus challenging the reliability of these methods. In this report, we discuss the regression estimator RA-lasso developed in \citet{fan2017estimation}, which is designed to handle high dimensional data whose underlying error distribution may be neither symmetric nor light-tailed.
+
+$ $\newline
+This report is organized as follows: for the remainder of this section, we more carefully motivate the RA-lasso estimator. In \cref{sec:method}, we present the proposed method along with some intuition on its theoretical guarantees as well as some practical considerations when applying this method. We comment on their simulation studies in terms of how well they justify the claims made in the paper in \cref{sec:simulation} and reproduce their simulation studies in \cref{sec:newsimulation}. This report is concluded with some final discussions of RA-lasso in \cref{sec:conclusion}.
