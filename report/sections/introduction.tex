@@ -7,3 +7,34 @@ Linear regression is an easy-to-use and highly interpretable statistical inferen
 
 $ $\newline
 This report is organized as follows: for the remainder of this section, we more carefully motivate the RA-lasso estimator. In \cref{sec:method}, we present the proposed method along with some intuition on its theoretical guarantees as well as some practical considerations when applying this method. We comment on their simulation studies in terms of how well they justify the claims made in the paper in \cref{sec:simulation} and reproduce their simulation studies in \cref{sec:newsimulation}. This report is concluded with some final discussions of RA-lasso in \cref{sec:conclusion}.
+
+$ $\newline
+In this report, we consider the linear regression model
+\[
+y_i = x_i^T\beta^\star + \epsilon_i
+\]
+where $\{x_i\}_{i=1}^n$ are independent and identically distributed $p$-dimensional covariate vectors and $\{\epsilon_i\}_{i=1}^n$ are independent and identically distributed errors. $\beta^\star$ is a $p$-dimensional regression coefficient vector that is assumed to be weakly sparse. In other words, many elements of $\beta^\star$ is exatly or close to $0$. We assume that $p \gg n$ and that both the distributions of $x$ and $\epsilon$ have mean $0$. The goal is to find $\hat{\beta}\in\mathbb{R}^p$ such that $x^T\hat{\beta}$ is close to $\mathbb{E}_{\epsilon}\left[ y | x \right] = x^T\beta^\star$, the conditional expectation of the response $y$ given $x$.
+
+$ $\newline
+If we consider $\{x_i\}_{i=1}^n$ to be fixed and further assume that $\text{Var}(\epsilon) = \sigma^2 < \infty$, then
+\begin{align}
+\hat{\beta}_{OLS} \in \argmin_{\beta\in\mathbb{R}^p}\frac{1}{n}\sum_{i=1}^n \left( y_i - x_i^T\beta \right)^2, \label{eq:ols}
+\end{align}
+the ordinary least squares (OLS) estimator is the linear unbiased estimator for $\beta^\star$ with the lowest possible variance. While it is tempting to use OLS for all regression problems, as mentioned above, in the high dimensional setting, there may not be a unique solution to \cref{eq:ols}. Thus the OLS estimator in high dimensional settings likely will not be interpretable.
+
+$ $\newline
+To handle this problem of having potentially multiple solutions, given some $\lambda>0$, an L1 regularization term can be added to \cref{eq:ols} to construct a different estimator:
+\begin{align}
+\hat{\beta}_{LASSO} \in \argmin_{\beta\in\mathbb{R}^p} \frac{1}{n}\sum_{i=1}^n \left( y_i - x_i^T\beta \right)^2 + \lambda\|\beta\|_1. \label{eq:lasso}
+\end{align}
+This is called the least absolute shrinkage and selection operator (LASSO). This method encourages sparsity in the estimated parameter $\hat{\beta}_{LASSO}$ with the $\lambda$ parameter controlling the level of sparsity. This estimator has been shown to be consistent (i.e. $\hat{\beta}_{LASSO}$ converges in probability to $\beta^\star$ as $n$ goes to infinity) under certain assumptions. However, this method is not robust to outliers where the response is unusually large or small compared to other observations with similar covariate vectors. We can see this from \cref{eq:lasso}. In particular, the squared term means that this objective function penalizes large differences between the observed response $y_i$ and fitted value $x_i^T\beta$ more so than it does smaller differences. As a result, a couple of outliers in the data set may cause the resulting estimated parameter to change drastically. This sensitivity to outliers is also reflected in one of the assumptions required for the LASSO to be consistent. Namely, one of these assumptions is that the distribution of $\epsilon$ is light-tailed, i.e., the tail of the error distribution does not decay slower than that of an exponential distribution. In other words, for the LASSO to be consistent, it is required that when the covariates of some observations are (close to) identical, there is not a substantial amount of variation among the corresponding responses. 
+
+$ $\newline
+In order to bypass this assumption of light-tailed error, which may not be reasonable in many cases in practice, a solution is to replace the squared loss with the absolute loss:
+\begin{align}
+\hat{\beta}_{LAD} \in \argmin_{\beta\in\mathbb{R}^p} \frac{1}{n}\sum_{i=1}^n \left| y_i - x_i^T\beta \right|. \label{eq:LAD}
+\end{align}
+This least absolute deviance (LAD) estimator is associated with estimating the conditional median of the response $y$ given some covariate $x$. Median, as an alternative measure of centre, is more robust to outliers than the mean. Therefore, we can expect $\hat{\beta}_{LAD}$ to be less sensitive to the outliers described above. Note that we can combine \cref{eq:LAD} with an L1 regularization term term in order to get a robust estimate of the regression parameters that is also sparse.
+
+$ $\newline
+However, for the LAD estimator combined with L1 regularization to be a good substitute for the LASSO, we are implicitely asking the median of the error distribution to be close to the mean. In the case that the median of the error distribution is equal to the mean, we are essentially making the implicit assumption that the error distribution is symmetric. When this implicit assumption does not hold, using the LAD estimator in place of the OLS estimator will introduce some systematic bias to our estimated regression parameter. Therefore, it is desirable to develop a high dimensional mean regresison estimator that is consistent even when the underlying error distribution is neither symmetric nor light-tailed.
