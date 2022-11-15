@@ -43,6 +43,7 @@ While the bound from \cref{eq:bound} aligns with our intuition on the trade off 
 \forall j\in\{1,\cdots,p\}, \quad x^j = \begin{bmatrix} x_{1j} & \cdots & x_{nj} \end{bmatrix}^T \in \mathbb{R}^n, \quad\text{and}\quad
 y = \begin{bmatrix} y_1 & \cdots & y_n \end{bmatrix}^T \in \mathbb{R}^n.
 \end{align*}
+Note that since the RA-lasso objective is convex, we can use composite gradient descent to obtain the RA-lasso estimate (using optimization packages such as \texttt{CVXR} in \texttt{R} or \texttt{CVX} in \texttt{MATLAB}). \citet{fan2017estimation} shows that this algorithm, with high probability, has the same convergence rate as \cref{eq:bound}.
 \begin{algorithm}
 \caption{RA-lasso procedure}\label{alg:ralasso}
 \begin{algorithmic}
