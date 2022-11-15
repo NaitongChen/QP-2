@@ -18,6 +18,24 @@ In the Huber loss, $\alpha$ controls the blending between squared and absolute l
 By tuning the $\alpha$ parameter, we can trade off the balance between being unbiased and being robust to outliers. Note that the Huber loss \cref{eq:huber} is convex and differentiable at $x=\alpha^{-1}$. Therefore, we can used gradient-based optimization to obtain the RA-lasso solution for some fixed $\alpha$ and $\lambda$.
 
 \subsection{Discussion on theoretical results}
+In this section, we provide a high level sketch of the theoretical guarantee on the quality of $\hat{\beta}_{RA-lasso}$ and offer connections to the motivation behind RA-lasso.
+
+$ $\newline
+In \citet{fan2017estimation}, the performance of $\hat{\beta}_{RA-lasso}$ is assessed through $\| \hat{\beta}_{RA-lasso} - \beta^\star \|_2$. More specifically, we can decompose this quantity as follows.
+\begin{align*}
+\| \hat{\beta}_{RA-lasso} - \beta^\star \|_2 \leq \| \beta^\star_\alpha - \beta^\star \|_2 + \| \hat{\beta}_{RA-lasso} - \beta^\star_\alpha \|_2,
+\end{align*}
+where $\beta^\star_\alpha = \argmin_{\beta\in\mathbb{R}^p}\mathbb{E}\left[ l_\alpha (y - x^T\beta) \right]$. We call  the first term in the above bound the approximation error and the second term the estimation error. Building on top of this, theorem 3 of \citet{fan2017estimation} states that, under the conditions of lemmas 1 and 3, for some $q\in(0,1]$ and $k\geq2$, with probability at least $1-c_1\exp(-c_2n)$,
+\begin{align}
+\| \hat{\beta}_{RA-lasso} - \beta^\star \|_2 \leq d_1\alpha^{k-1} + d_2\sqrt{R_q}\left( \frac{\log p}{n} \right)^{\frac{1}{2} - \frac{q}{4}}, \label{eq:bound}
+\end{align}
+where the first term is a bound on the approximation error and the second term is a bound on the estimation error. The technical conditions and the selection of constants in full detail can be found in Section 2 of \citet{fan2017estimation}.
+
+$ $\newline
+It is easy to see that, when the error distribution is symmetric (i.e. when the mean and median of the error distribution are euqal), $\beta^\star_\alpha = \beta^\star$ for all $\alpha$, which implies that the approximation error is $0$. When the error distribution is asymmetric, the bound on the approximation error can be thought of as the amount of bias introduced through the use of the Huber loss with blending parameter $\alpha$. Note that this bound increases with $\alpha$. Indeed, the larger we set $\alpha$, the closer the Huber loss is to the absolute loss, which implies a larger bias induced by the RA-lasso estimator. This aligns with our intuition on the trade off between being unbiased and robust to outliers. The bound on the estimation error, on the other hand, is independent of $\alpha$, and it converges to $0$ as the number of observations $n$ goes to infinity. By controlling the rate at which $\alpha$ increases, it is possible to have $\| \hat{\beta}_{RA-lasso} - \beta^\star \|_2$ converging to $0$ at the rate of the bound on the estimation error from \cref{eq:bound}, which is the same as the optimal rate under the light tail situation \cite{raskutti2011minimax}.
+
+$ $\newline
+Before presenting the procedure for applying the RA-lasso estimator, we note that this estimator can be used as a mean estimator by treating it as a univariate linear regression problem where the covariate equals $1$. Similarly, by noting that each element of the covariance matrix $\sigma_{ij}$ for $i,j\in\{1,\cdots,p\}$ can be written as an expectation of the product between the $i$th and $j$th element of the centred covariate vector, the RA-lasso estimator can then also be used to estiamte the covariance matrix. Concentration inequalities for both of these cases are developed in \citet{fan2017estimation}. Through this lens, \citet{fan2017estimation} also extended an mean estimator of heavy-tailed distributions developed in \citet{catoni2012challenging} to the linear regression setting and developed a corresponding high probability bound similar to that of \cref{eq:bound}. However, these extensions are out of the scope of this report, and are thus not discussed in any more details here.
 
 \subsection{Practical implementation}
 

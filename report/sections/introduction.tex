@@ -13,7 +13,7 @@ In this report, we consider the linear regression model
 \[
 y_i = x_i^T\beta^\star + \epsilon_i
 \]
-where $\{x_i\}_{i=1}^n$ are independent and identically distributed $p$-dimensional covariate vectors and $\{\epsilon_i\}_{i=1}^n$ are independent and identically distributed errors. $\beta^\star$ is a $p$-dimensional regression coefficient vector that is assumed to be weakly sparse. In other words, many elements of $\beta^\star$ is exatly or close to $0$. We assume that $p \gg n$ and that both the distributions of $x$ and $\epsilon$ have mean $0$. The goal is to find $\hat{\beta}\in\mathbb{R}^p$ such that $x^T\hat{\beta}$ is close to $\mathbb{E}_{\epsilon}\left[ y | x \right] = x^T\beta^\star$, the conditional expectation of the response $y$ given $x$.
+where $\{x_i\}_{i=1}^n$ are independent and identically distributed $p$-dimensional covariate vectors and $\{\epsilon_i\}_{i=1}^n$ are independent and identically distributed errors (note that the paper also covers the heteroscedastic case where the error $\epsilon_i$ depends on $x_i$ for all $i=1,\dots,n$, but we focus on the homoscedastic case in this report). $\beta^\star$ is a $p$-dimensional regression coefficient vector that is assumed to be weakly sparse. In other words, many elements of $\beta^\star$ is exatly or close to $0$. We assume that $p \gg n$ and that both the distributions of $x$ and $\epsilon$ have mean $0$. The goal is to find $\hat{\beta}\in\mathbb{R}^p$ such that $x^T\hat{\beta}$ is close to $\mathbb{E}_{\epsilon}\left[ y | x \right] = x^T\beta^\star$, the conditional expectation of the response $y$ given $x$.
 
 $ $\newline
 If we consider $\{x_i\}_{i=1}^n$ to be fixed and further assume that $\text{Var}(\epsilon) = \sigma^2 < \infty$, then
