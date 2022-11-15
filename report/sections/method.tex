@@ -3,6 +3,19 @@
 % Summary section
 
 \section{Proposed method}\label{sec:method}
+In the case where the error distribution is heavy-tailed and asymmettic, by using the absolute loss in place of the squared loss, we hope to obtain an regression estimator that is more robust to outliers at the cost of introducing some bias. The magnitude of this bias is dependent on the distribution of the error. However, note that the OLS estimator is unbiased for all error distributions with mean $0$ and a finite variance. These observations motivate the idea of using a loss function that balances the unbiasedness of an OLS estimator and the robustness of an LAD estimator. One way of achieving this balance is through the use of the Huber loss with a blending parameter $\alpha \geq 0$:
+\begin{align}
+l_\alpha(x) = 
+\begin{cases}
+2\alpha^{-1}|x|-\alpha^{-2} \quad &\text{if } |x|>\alpha^{-1} \\
+x^2 \quad &\text{if } |x|\leq\alpha^{-1}
+\end{cases}. \label{eq:huber}
+\end{align}
+In the Huber loss, $\alpha$ controls the blending between squared and absolute loss: $\alpha=0$ corresponds to the squared loss and $\alpha=\infty$ corresponds to the absolute loss. \citet{fan2017estimation} proposes the penalized robust approximate (RA) quadratic loss using the Huber loss for high dimensional mean regression problems with an asymmetric and heavy-tailed error distribution. When L1 regularization is chosen to be the penalty term, for some $\alpha,\lambda\geq0$, we arrive at the RA-lasso estimator
+\begin{align*}
+\hat{\beta}_{RA-lasso} = \argmin_{\beta\in\mathbb{R}^p} \frac{1}{n}\sum_{i=1}^n l_\alpha \left( y_i - x_i^T\beta \right) + \lambda\|\beta\|_1.
+\end{align*}
+By tuning the $\alpha$ parameter, we can trade off the balance between being unbiased and being robust to outliers. Note that the Huber loss \cref{eq:huber} is convex and differentiable at $x=\alpha^{-1}$. Therefore, we can used gradient-based optimization to obtain the RA-lasso solution for some fixed $\alpha$ and $\lambda$.
 
 \subsection{Discussion on theoretical results}
 
