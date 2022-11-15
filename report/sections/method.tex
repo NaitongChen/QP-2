@@ -29,7 +29,7 @@ where $\beta^\star_\alpha = \argmin_{\beta\in\mathbb{R}^p}\mathbb{E}\left[ l_\al
 \begin{align}
 \| \hat{\beta}_{RA-lasso} - \beta^\star \|_2 \leq d_1\alpha^{k-1} + d_2\sqrt{R_q}\left( \frac{\log p}{n} \right)^{\frac{1}{2} - \frac{q}{4}}, \label{eq:bound}
 \end{align}
-where the first term is a bound on the approximation error and the second term is a bound on the estimation error. The technical conditions and the selection of constants in full detail can be found in Section 2 of \citet{fan2017estimation}.
+where the first term is a bound on the approximation error and the second term is a bound on the estimation error. The technical conditions and the selection of constants in full detail can be found in Section 2 of \citet{fan2017estimation}. It is, however, worth pointing out that this above bound only applies to $\alpha$ and $\lambda$ values satisfying the conditions in lemmas 1 and 3.
 
 $ $\newline
 It is easy to see that, when the error distribution is symmetric (i.e. when the mean and median of the error distribution are euqal), $\beta^\star_\alpha = \beta^\star$ for all $\alpha$, which implies that the approximation error is $0$. When the error distribution is asymmetric, the bound on the approximation error can be thought of as the amount of bias introduced through the use of the Huber loss with blending parameter $\alpha$. Note that this bound increases with $\alpha$. Indeed, the larger we set $\alpha$, the closer the Huber loss is to the absolute loss, which implies a larger bias induced by the RA-lasso estimator. This aligns with our intuition on the trade off between being unbiased and robust to outliers. The bound on the estimation error, on the other hand, is independent of $\alpha$, and it converges to $0$ as the number of observations $n$ goes to infinity. By controlling the rate at which $\alpha$ increases, it is possible to have $\| \hat{\beta}_{RA-lasso} - \beta^\star \|_2$ converging to $0$ at the rate of the bound on the estimation error from \cref{eq:bound}, which is the same as the optimal rate under the light tail situation \cite{raskutti2011minimax}.
@@ -38,4 +38,36 @@ $ $\newline
 Before presenting the procedure for applying the RA-lasso estimator, we note that this estimator can be used as a mean estimator by treating it as a univariate linear regression problem where the covariate equals $1$. Similarly, by noting that each element of the covariance matrix $\sigma_{ij}$ for $i,j\in\{1,\cdots,p\}$ can be written as an expectation of the product between the $i$th and $j$th element of the centred covariate vector, the RA-lasso estimator can then also be used to estiamte the covariance matrix. Concentration inequalities for both of these cases are developed in \citet{fan2017estimation}. Through this lens, \citet{fan2017estimation} also extended an mean estimator of heavy-tailed distributions developed in \citet{catoni2012challenging} to the linear regression setting and developed a corresponding high probability bound similar to that of \cref{eq:bound}. However, these extensions are out of the scope of this report, and are thus not discussed in any more details here.
 
 \subsection{Practical implementation}
-
+While the bound from \cref{eq:bound} aligns with our intuition on the trade off between unbiasedness and robustness against outliers, this result only holds for specific values of $\alpha$ and $\lambda$. In addition, the choice of $\alpha$ and $\lambda$ values depend on universal constants that are typically not known in practice. As a result, \citet{fan2017estimation} suggests selecting $\alpha$ and $\lambda$ by a two-dimensional grid search using cross-validation for a set of values that minimize the mean-squared error or an information-based criterion. More specifically, it is suggested that the search grid is formed by values that are equally spaced in log scale. Although not explicitely stated in the paper, it is recommended to form a search grid that contains candidate $\alpha$ and $\lambda$ values ranging across multiple orders of magnitude. \cref{alg:ralasso} outlines the procedure for applying the RA-lasso estimator, where the hyperparameters $\alpha$ and $\lambda$ are chosen from candidate values $(\alpha_i)_{i=1}^{C_\alpha}$ and $(\lambda_i)_{i=1}^{C_\lambda}$ using $K$-fold cross-validation with the mean-squared loss. Note that for $j\in\{1,\cdots,p\}$, we write $x^j = \begin{bmatrix} x_{1j} & \cdots & x_{nj} \end{bmatrix}^T \in \mathbb{R}^n$. We also write $y = \begin{bmatrix} y_1 & \cdots & y_n \end{bmatrix}^T \in \mathbb{R}^n$.
+\begin{algorithm}
+\caption{RA-lasso procedure}\label{alg:ralasso}
+\begin{algorithmic}
+\Require $(x_i, y_i)_{i=1}^n$, $(\alpha_i)_{i=1}^{C_\alpha}$, $(\lambda_i)_{i=1}^{C_\lambda}$, K
+\State 1. standardize the response and each of the $p$ predictors to have mean $0$ and unit variance
+\State \quad $\tilde{y} = ( y - \texttt{mean}(y) ) / \texttt{sd}(y)$;
+\State \quad $\forall j=1,\cdots,p$, \quad $\tilde{x}^j = ( x^j - \texttt{mean}(x^j) ) / \texttt{sd}(x^j)$
+\State 2. randomly split the index set $\mathcal{I} = \{1,\dots,n\}$ into $K$ (equally sized) disjoint sets
+\State \quad $\mathcal{I}_1, \cdots, \mathcal{I}_K \subset \mathcal{I}$ such that $\mathcal{I}_1 \cup \cdots \cup \mathcal{I}_K = \mathcal{I}$
+\State 3. perform K-fold cross-validation
+\State \quad \texttt{cv\_loss = matrix(}$0, C_\alpha, C_\lambda$\texttt{)}
+\Indent
+	\For{\texttt{i in 1,...,}$C_\alpha$}
+		\For{\texttt{j in 1,...,}$C_\lambda$}
+			\For{\texttt{k in 1,...,K}}
+				\State $\hat{\beta} = \argmin_{\beta\in\mathbb{R}^p} 
+						\frac{1}{n - |\mathcal{I}_k|}\sum_{m \notin \mathcal{I}_k} l_{\alpha_i} 
+						\left( \tilde{y}_m - \tilde{x}_m^T\beta \right) + \lambda_j\|\beta\|_1$
+				\State \texttt{cv\_loss[i,j]} $+= \sum_{m \in \mathcal{I}_k} 
+												\left( \tilde{y}_m - \tilde{x}_m^T\hat{\beta} \right)^2$
+			\EndFor
+		\EndFor
+	\EndFor
+\EndIndent
+\State \quad $i^\star, j^\star=$ \texttt{which(cv\_loss == min(cv\_loss), arr.ind = TRUE)}
+\State 4. refit the model using all data with the selected hyperparameters
+\State \quad $\tilde{\beta}_{RA-lasso} = \argmin_{\beta\in\mathbb{R}^p} \frac{1}{n}\sum_{i=1}^n l_{\alpha_{i^\star}} \left( \tilde{y}_i - \tilde{x}_i^T\beta \right) + \lambda_{j^\star}\|\beta\|_1$
+\State 5. destandardize the coefficients back to original scale
+\State \quad $\hat{\beta}_{RA-lasso, 0} = \texttt{mean}(y) - \sum_{j=1}^p \frac{\texttt{sd}(y)}{\texttt{sd}(x^j)}\texttt{mean}(x^j)$ \Comment{intercept term}
+\State \quad $\forall j = 1,\dots,p$, \quad $\hat{\beta}_{RA-lasso, j} = \frac{\texttt{sd}(y)}{\texttt{sd}(x^j)}\tilde{\beta}_{RA-lasso, j}$ \Comment{slope terms}
+\end{algorithmic}
+\end{algorithm}

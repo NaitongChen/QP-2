@@ -7,7 +7,11 @@
 
 % Note: You will get an empty bibliography warning when compiling until you include a citation.
 \documentclass[12pt]{article}
-%\usepackage[autonum]{shortex}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\algdef{SE}[SUBALG]{Indent}{EndIndent}{}{\algorithmicend\ }%
+\algtext*{Indent}
+\algtext*{EndIndent}
 \def\argmin{\operatornamewithlimits{arg\,min}}
 \input{header}
 \input{defs}
