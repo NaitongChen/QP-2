@@ -4,17 +4,17 @@ library(doParallel)
 library(foreach)
 
 # set up parallel computing
-# n.cores <- parallel::detectCores() - 1;
-# 
-# my.cluster <- parallel::makeCluster(
-#   n.cores, 
-#   type = "PSOCK"
-# );
-# 
-# doParallel::registerDoParallel(cl = my.cluster);
-# 
-# foreach::getDoParRegistered()
-# foreach::getDoParWorkers()
+n.cores <- parallel::detectCores() - 1;
+
+my.cluster <- parallel::makeCluster(
+  n.cores,
+  type = "PSOCK"
+);
+
+doParallel::registerDoParallel(cl = my.cluster);
+
+foreach::getDoParRegistered()
+foreach::getDoParWorkers()
 
 
 n = 100;  # number of observations
@@ -58,12 +58,13 @@ TuneHyperParam <- function(case) {
   loss1 = matrix(0, LENGTH_la, LENGTH_a);
   for (k in 1:N) {
     for (i in 1:LENGTH_la) {
-      for (j in 1:LENGTH_a) {
-        print(c(k,i,j))
+      print(c(k,i))
+      loss1_i = foreach (j = 1:LENGTH_a, .combine = 'c', .packages = "CVXR") %dopar% {
         betah = L1PenHuber(YV[(n*(k-1)+1):(n*k), case], XV[(n*(k-1)+1):(n*k),], lamb[i], alp[j]);
         betah = betah * (abs(betah) > 1e-04);
-        loss1[i,j] = loss1[i,j] + norm(betah-beta_0, "F");
+        betah = norm(betah-beta_0, "F");
       }
+      loss1[i,] = loss1[i,] + loss1_i;
     }
   }
   
