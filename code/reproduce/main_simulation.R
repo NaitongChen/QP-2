@@ -2,6 +2,7 @@ suppressWarnings(library(CVXR, warn.conflicts=FALSE))
 library(glmnet)
 library(doParallel)
 library(foreach)
+set.seed(2022)
 
 n = 100;  # number of observations
 p = 400;  # number of variables

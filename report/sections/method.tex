@@ -72,7 +72,7 @@ Note that since the RA-lasso objective is convex, we can use composite gradient 
 \State 4. refit the model using all data with the selected hyperparameters
 \State \quad $\tilde{\beta}_{RA-lasso} = \argmin_{\beta\in\mathbb{R}^p} \frac{1}{n}\sum_{i=1}^n l_{\alpha_{i^\star}} \left( \tilde{y}_i - \tilde{x}_i^T\beta \right) + \lambda_{j^\star}\|\beta\|_1$
 \State 5. destandardize the coefficients back to original scale (optional)
-\State \quad $\hat{\beta}_{RA-lasso, 0} = \texttt{mean}(y) - \sum_{j=1}^p \frac{\texttt{sd}(y)}{\texttt{sd}(x^j)}\texttt{mean}(x^j)$ \Comment{intercept term}
+\State \quad $\hat{\beta}_{RA-lasso, 0} = \texttt{mean}(y) - \sum_{j=1}^p \frac{\texttt{sd}(y)}{\texttt{sd}(x^j)}\texttt{mean}(x^j)\tilde{\beta}_{RA-lasso, j}$ \Comment{intercept term}
 \State \quad $\forall j = 1,\dots,p$, \quad $\hat{\beta}_{RA-lasso, j} = \frac{\texttt{sd}(y)}{\texttt{sd}(x^j)}\tilde{\beta}_{RA-lasso, j}$ \Comment{slope terms}
 \end{algorithmic}
 \end{algorithm}

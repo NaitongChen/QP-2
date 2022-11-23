@@ -1,4 +1,5 @@
 # setwd("~/simulation")
+set.seed(2022)
 N = 100
 n = 100
 p = 400

@@ -1,4 +1,5 @@
 # setwd("~/simulation")
+set.seed(2022)
 N = 100
 n = 100
 contaminated = 10
@@ -17,21 +18,21 @@ generate_homo <- function(n,p,beta_0){  ## Generate data for the homoscedastic c
   Y = error = matrix(0, n, CASE)
   #(1) N(0,4)
   error[,1] = rnorm(n, mean = 0, sd = 2)
-  #(4) t_2
+  #(2) t_2
   error[,2] = rt(n, df = 2)
   #(3) MixN
   index = sample(c(1,2), size = n, replace = TRUE, prob = c(0.5, 0.5))
   error[which(index==1),3] = rnorm(length(which(index==1)), mean = -1, sd = 2)
   error[which(index==2),3] = rnorm(length(which(index==2)), mean = 8, sd = 1)
   error[,3] = (error[,3] - 3.5)
-  #(5) High leverage 1
+  #(4) High leverage 1
   for(j in 1:contaminated){
     a_t = sample(c(-1,1), p, replace = TRUE)
     a = a_t - (1/p) * sum(a_t)
     X_lev1[j,] = rnorm(p, sd = 0.1) + (1/norm(a, "2")) * a
   }
   error[,4] = rnorm(n, mean = 0, sd = 1)
-  #(6) High leverage 2
+  #(5) High leverage 2
   for(j in 1:contaminated){
     a_t = sample(c(-1,1), p, replace = TRUE)
     a = a_t - (1/p) * sum(a_t)

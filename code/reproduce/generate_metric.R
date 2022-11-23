@@ -30,6 +30,7 @@ for (k in 1:K) {
     a = glmnet(x = X[(n*(k-1)+1):(n*k),], y = Y[(n*(k-1)+1):(n*k), j],
                family = "gaussian", alpha = 1, lambda = c(Lambda[j], 0), intercept = FALSE);
     Beta_lasso[,j] = a$beta[,1]
+    Beta_lasso[,j] = Beta_lasso[,j] * (abs(Beta_lasso[,j]) > 1e-04);
     
     l2loss[k,j] = norm(Betar[,j] - beta_0, "2");
     l1loss[k,j] = norm(Betar[,j] - beta_0, "1");
