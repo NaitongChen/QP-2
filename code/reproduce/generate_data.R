@@ -20,8 +20,8 @@ generate_homo <- function(n,p,beta_0){  ## Generate data for the homoscedastic c
   error[,2] = (error[,2] - mean(error[,2]))
   #(3) MixN
   index = sample(c(1,2), size = n, replace = TRUE, prob = c(0.5, 0.5))
-  error[which(index==1),3] = -abs(rnorm(length(which(index==1)), mean = -1, sd = 2))
-  error[which(index==2),3] = abs(rnorm(length(which(index==2)), mean = 8, sd = 1))
+  error[which(index==1),3] = rnorm(length(which(index==1)), mean = -1, sd = 2)
+  error[which(index==2),3] = rnorm(length(which(index==2)), mean = 8, sd = 1)
   error[,3] = (error[,3] - mean(error[,3]))
   for(j in 1:ncol(Y)){
     Y[,j] = X %*% beta_0 + error[,j]
