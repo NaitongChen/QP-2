@@ -1,6 +1,8 @@
 hyperparams = read.csv('hyperparams.csv');
 Lambda.Alpha = hyperparams[,1:2]
 Lambda = hyperparams[,3]
+p = 400
+n = 100
 
 K=100;
 CASE=3;
@@ -51,6 +53,7 @@ for (k in 1:K) {
     colnames(df)[1] = "Y"
     fit = lm(formula = Y ~ . - 1, data = df)
     beta_oracle = fit$coefficients
+    beta_oracle = c(beta_oracle, rep(0, 380))
     RA_1[k,j] = (norm(Beta_lasso[,j] - beta_0, "2") - norm(beta_oracle - beta_0, "2")) / (norm(Betar[,j] - beta_0, "2") - norm(beta_oracle - beta_0, "2"))
     RA_2[k,j] = (norm(Beta_lasso[,j] - beta_0, "1") - norm(beta_oracle - beta_0, "1")) / (norm(Betar[,j] - beta_0, "1") - norm(beta_oracle - beta_0, "1"))
   }
