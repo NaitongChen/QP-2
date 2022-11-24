@@ -3,4 +3,27 @@
 % Summary section
 
 \section{Discussion on simulation}\label{sec:simulation}
+In this section, we take a closer look at the simulation studies conducted in \citet{fan2017estimation}. In particular, we focus on the simulation results from Table 2 in \citet{fan2017estimation} on a synthetic sparse, high dimensional homoscedastic model under various centred error distributions. By homoscedastic, we mean that the error is independent of the observations and the true regression coefficients. With $n=100$ and $p=400$, the model takes on the following form:
+\begin{align*}
+y_i = x_i^T \beta^\star + \epsilon_i, \quad x_i \overset{\text{i.i.d.}}{\sim} N(0, I_p) \quad \forall i \in \{1,\dots,n\}, \quad \text{and} \quad \beta^\star = \begin{bmatrix} 3, \dots, 3, 0, \dots, 0 \end{bmatrix}^T,
+\end{align*}
+where the first $20$ are all equal to $3$ and the rest are all equal to $0$. Five different error distributions exhibiting all possible combinations of heavy/light-tailed and (a)symmetric error distributions are tested, including a light-tailed and symmetric error distribution being the baseline. The detailed settings of these error distributions can be found in Table 1 in \citet{fan2017estimation}. We note that this setup can help isolate the change in performance caused by the tail behaviour of the error distribution and whether the error distribution is symmetric.
 
+$ $\newline
+In this simulation study, RA-lasso is compared against two other estimators: the LASSO and R-lasso, which is the LAD estimator with L1 regularization. Recall that while LASSO is the go-to method for sprase high-dimensional mean regression, it may struggle with heavy-tailed errors. R-lasso addresses this issue with LASSO by replacing the squared loss in the objective with absolute loss. However, R-lasso imposes a strong implicit assumption that the error distribution is symmetric. By comparing these three methods, we can easily see how well RA-lasso handles the heavy-tailedness and/or asymmetricity of the error distributions compared to both the default method and a previous approach in the setting of sparse high-dimensional mean regression. On the other hand, the inclusion of the baseline case with a light-tail and symmetric error distribution allows us to check whether we lose any efficiency when the error distribution is indeed light-tailed and symmetric.
+
+$ $\newline
+To quantitatively assess the performance of the estimators, the L2 and L1 errors between the true regression coefficients and the estimates are computed to indicate how close each regression estimate is to the true value. At the same time, the number of noise predictors that are selected (false positive) and the number of true predictors that are not selected (false negative) are also computed to assess the quality of the selected predictors. Finally, a measure of the relative gain of RA-lasso with respect to R-lasso and LASSO
+\begin{align*}
+\frac{\|\hat{\beta}_{\text{LASSO}} - \beta^\star\| - \|\hat{\beta}_{\text{oracle}} - \beta^\star\|}{\|\hat{\beta}_{\text{RA-lasso}} - \beta^\star\| - \|\hat{\beta}_{\text{oracle}} - \beta^\star\|}, \quad
+\frac{\|\hat{\beta}_{\text{R-lasso}} - \beta^\star\| - \|\hat{\beta}_{\text{oracle}} - \beta^\star\|}{\|\hat{\beta}_{\text{RA-lasso}} - \beta^\star\| - \|\hat{\beta}_{\text{oracle}} - \beta^\star\|},
+\end{align*}
+in terms of both the L1 and L2 norms, are also computed. Note that $\hat{\beta}_{\text{oracle}}$ denotes the OLS estimator by using only the first $20$ predictors. These relative gain values offer an intuitive comparion between RA-lasso and another method: a relative gain greater than $1$ indicates that the RA-lasso estimate is closer to the true $\hat{\beta}$ than LASSO or R-lasso, and vice versa.
+
+$ $\newline
+To select the optimal hyperparameters of each method, $100$ independently generated validation sets are used. More specifically, a grid search is performed to find the hyperparameters that minimize the mean L2-loss between the true regression coefficients and the estimates. Each of the regression estimates are then constructed using the corresponding optimal hyperparameters. The error metrics with respect to these regression estimates are then computed. This procedure is repeated $100$ times, and Table 2 in \citet{fan2017estimation} shows the mean of each error metric for a given error distribution and regression method.
+
+\subsection{Relevance and practicality of the simulation study}
+Although this simulation study covers a wide range of symmetric and asymmetric error distributions with different tail behaviours, some of the procedures appear to be arbitrarily chosen and impractical. Furthermore, the simulation studies does not seem to reflect the theoretical convergence guarantees discussed in the paper. Here we provide a detailed discussion.
+
+$ $\newline
