@@ -1,3 +1,41 @@
+#####################################
+# load libraries
+#####################################
+suppressWarnings(library(CVXR, warn.conflicts=FALSE))
+library(glmnet)
+library(doParallel)
+library(foreach)
+library(pense)
+
+#####################################
+# set seed and constants
+#####################################
+set.seed(2022)
+n = 100;  # number of observations
+p = 400;  # number of variables
+CASE = 5;  # 5 scenarios for error distribution
+LAMAX = 1.5;  # lambda_max
+LAMAX_lasso = 10;
+AMAX = 1.0;  # alpha_max
+LENGTH_la = 15;  # number of lambdas used in validation
+LENGTH_la_lasso = 15;
+LENGTH_a = 15;  # number of alphas used in validation
+N = 20;  # number of validation datasets
+beta_0 = as.matrix(c(3*rep(1,20), rep(0,380)))  # true beta
+
+# lamb = seq(0.0001,LAMAX,length.out = LENGTH_la);
+# alp = seq(0.0001,AMAX,length.out = LENGTH_a);
+# lamb_lasso = rev(seq(0.00001,LAMAX_lasso,length.out = LENGTH_la_lasso));
+# lamb_pense = rev(seq(0.00001,LAMAX_lasso,length.out = LENGTH_la_lasso));
+
+lamb = exp(seq(-10,2, length.out = LENGTH_la));
+alp = exp(seq(-10,2, length.out = LENGTH_a));
+lamb_lasso = rev(exp(seq(-15,2, length.out = LENGTH_la_lasso)));
+lamb_pense = rev(exp(seq(-15,2, length.out = LENGTH_la_lasso)));
+
+#####################################
+# read outputs from simulation
+#####################################
 l2loss = read.csv("l2loss.csv")
 l1loss = read.csv("l1loss.csv")
 FP = read.csv("FP.csv")
@@ -17,6 +55,9 @@ l1loss_lasso = read.csv("l1loss_lasso.csv")
 FP_lasso = read.csv("FP_lasso.csv")
 FN_lasso = read.csv("FN_lasso.csv")
 
+#####################################
+# compute metrics
+#####################################
 for (i in 1:CASE) {
   round(mean(l1loss[,i]), 2)
   round(quantile(l1loss[,i], probs = c(0.05, 0.95)), 2)

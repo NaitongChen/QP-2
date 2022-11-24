@@ -1,10 +1,16 @@
+#####################################
+# load libraries
+#####################################
 suppressWarnings(library(CVXR, warn.conflicts=FALSE))
 library(glmnet)
 library(doParallel)
 library(foreach)
 library(pense)
-set.seed(2022)
 
+#####################################
+# set seed and constants
+#####################################
+set.seed(2022)
 n = 100;  # number of observations
 p = 400;  # number of variables
 CASE = 5;  # 5 scenarios for error distribution
@@ -17,11 +23,6 @@ LENGTH_a = 15;  # number of alphas used in validation
 N = 20;  # number of validation datasets
 beta_0 = as.matrix(c(3*rep(1,20), rep(0,380)))  # true beta
 
-X_cv = read.csv('x_cv.csv');
-X_lev1_cv = read.csv('x_lev1_cv.csv');
-X_lev2_cv = read.csv('x_lev2_cv.csv');
-Y_cv = read.csv('y_cv.csv');
-
 # lamb = seq(0.0001,LAMAX,length.out = LENGTH_la);
 # alp = seq(0.0001,AMAX,length.out = LENGTH_a);
 # lamb_lasso = rev(seq(0.00001,LAMAX_lasso,length.out = LENGTH_la_lasso));
@@ -32,23 +33,17 @@ alp = exp(seq(-10,2, length.out = LENGTH_a));
 lamb_lasso = rev(exp(seq(-15,2, length.out = LENGTH_la_lasso)));
 lamb_pense = rev(exp(seq(-15,2, length.out = LENGTH_la_lasso)));
 
-L1PenHuber <- function(Y, X, lambda, alpha) {
-  np = dim(X);
-  n = np[1]
-  p = np[2]
-  
-  X = as.matrix(X)
-  Y = as.matrix(Y)
-  
-  betaHat <- Variable(p,1)
-  objective <- Minimize(sum(huber(Y - X %*% betaHat, 1/alpha)) + n*lambda*norm(betaHat,"1"))
-  problem <- Problem(objective)
-  result <- solve(problem, solver = "ECOS")
-  
-  return(result$getValue(betaHat))
-}
+#####################################
+# load data
+#####################################
+X_cv = read.csv('x_cv.csv');
+X_lev1_cv = read.csv('x_lev1_cv.csv');
+X_lev2_cv = read.csv('x_lev2_cv.csv');
+Y_cv = read.csv('y_cv.csv');
 
+#####################################
 # set up parallel computing
+#####################################
 n.cores <- parallel::detectCores() - 1;
 
 my.cluster <- parallel::makeCluster(
@@ -66,7 +61,30 @@ clusterExport(cl=my.cluster, list("n", "p", "CASE", "LAMAX", "LAMAX_lasso", "AMA
                                   "X_cv", "X_lev1_cv", "X_lev2_cv", "Y_cv", "lamb", "lamb_lasso", "lamb_pense", "alp"),
               envir=environment())
 
+#####################################
+# helper: ra-lasso solver
+#####################################
+L1PenHuber <- function(Y, X, lambda, alpha) {
+  np = dim(X);
+  n = np[1]
+  p = np[2]
+  
+  X = as.matrix(X)
+  Y = as.matrix(Y)
+  
+  betaHat <- Variable(p,1)
+  objective <- Minimize(sum(huber(Y - X %*% betaHat, 1/alpha)) + n*lambda*norm(betaHat,"1"))
+  problem <- Problem(objective)
+  result <- solve(problem, solver = "ECOS")
+  
+  return(result$getValue(betaHat))
+}
+
+#####################################
+# helper: CV for one dataset
+#####################################
 TuneHyperParam <- function(case, nfold, rep) {
+  # extract dataset
   if (case <= 3) {
     X_curr = X_cv[(n*(rep-1)+1):(n*rep),]
     Y_curr = Y_cv[(n*(rep-1)+1):(n*rep), case]
@@ -127,6 +145,7 @@ TuneHyperParam <- function(case, nfold, rep) {
     loss1_pense = loss1_pense + loss1_pense_k
   }
   
+  # identify index of optimal hyper-param
   inds = which(loss1 == min(loss1), arr.ind = TRUE);
   q1 = inds[1]
   q2 = inds[2]
@@ -138,7 +157,9 @@ TuneHyperParam <- function(case, nfold, rep) {
   return(list(q1, q2, ind_lasso, ind_pense, loss1, loss1_lasso, loss1_pense))
 }
 
+#####################################
 # compute metrics
+#####################################
 K=20;
 CASE=5;
 
@@ -163,9 +184,15 @@ FN_lasso = matrix(0,K,CASE);
 
 beta_0_copy = beta_0
 
+#####################################
+# loop through all repetitions
+# and scenarios to compare
+#####################################
 for (k in 1:K) {
   for (j in 1:CASE) {
     print(c(k,j))
+    
+    # extract data
     if (j <= 3) {
       X_curr = X_cv[(n*(k-1)+1):(n*k),]
       Y_curr = Y_cv[(n*(k-1)+1):(n*k), j]
@@ -177,6 +204,7 @@ for (k in 1:K) {
       Y_curr = Y_cv[(n*(k-1)+1):(n*k), j]
     }
     
+    # fit oracle estimate
     df = as.data.frame(cbind(Y_curr, X_curr[,1:20]))
     colnames(df)[1] = "Y"
     fit = lm(formula = Y ~ . - 1, data = df)
@@ -200,16 +228,21 @@ for (k in 1:K) {
     }
     X_curr = as.matrix(X_curr)
     
+    # perform cv
     inds = TuneHyperParam(j, 5, k)
     
+    # fit entire dataset using tuned hyper-param
+    # RA-lasso
     betah_ra = L1PenHuber(Y_curr, X_curr, lamb[inds[[1]]], alp[inds[[2]]]);
     betah_ra = betah_ra * (abs(betah_ra) > 1e-04);
     
+    # lasso
     a = glmnet(x = X_curr, y = Y_curr,
                family = "gaussian", alpha = 1, lambda = c(lamb_lasso[inds[[3]]], 0), intercept = FALSE);
     betah_lasso = a$beta[,1]
     betah_lasso = betah_lasso * (abs(betah_lasso) > 1e-04);
     
+    # pense
     betah_pense = pense(X_curr, as.vector(Y_curr), alpha = 1, lambda = lamb_pense[inds[[4]]], intercept = FALSE)$estimates[[1]]$beta 
     betah_pense = betah_pense * (abs(betah_pense) > 1e-04);
     
@@ -253,8 +286,14 @@ for (k in 1:K) {
   }
 }
 
+#####################################
+# stop parallel cluster
+#####################################
 parallel::stopCluster(my.cluster)
 
+#####################################
+# write output
+#####################################
 write.csv(l2loss, file = "l2loss.csv", row.names = FALSE)
 write.csv(l1loss, file = "l1loss.csv", row.names = FALSE)
 write.csv(FP, file = "FP.csv", row.names = FALSE)
