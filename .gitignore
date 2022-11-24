@@ -42,6 +42,6 @@ vignettes/*.pdf
 *.synctex.gz
 
 # data
-*.csv
+# *.csv
 
 *.asv
