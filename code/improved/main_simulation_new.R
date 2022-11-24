@@ -11,8 +11,8 @@ CASE = 5;  # 5 scenarios for error distribution
 LAMAX = 1.5;  # lambda_max
 LAMAX_lasso = 10;
 AMAX = 1.0;  # alpha_max
-LENGTH_la = 30;  # number of lambdas used in validation
-LENGTH_la_lasso = 200;
+LENGTH_la = 15;  # number of lambdas used in validation
+LENGTH_la_lasso = 15;
 LENGTH_a = 15;  # number of alphas used in validation
 N = 20;  # number of validation datasets
 beta_0 = as.matrix(c(3*rep(1,20), rep(0,380)))  # true beta
@@ -22,10 +22,15 @@ X_lev1_cv = read.csv('x_lev1_cv.csv');
 X_lev2_cv = read.csv('x_lev2_cv.csv');
 Y_cv = read.csv('y_cv.csv');
 
-lamb = seq(0.0001,LAMAX,length.out = LENGTH_la);
-lamb_lasso = rev(seq(0.00001,LAMAX_lasso,length.out = LENGTH_la_lasso));
-lamb_pense = rev(seq(0.00001,LAMAX_lasso,length.out = LENGTH_la_lasso));
-alp = seq(0.0001,AMAX,length.out = LENGTH_a);
+# lamb = seq(0.0001,LAMAX,length.out = LENGTH_la);
+# alp = seq(0.0001,AMAX,length.out = LENGTH_a);
+# lamb_lasso = rev(seq(0.00001,LAMAX_lasso,length.out = LENGTH_la_lasso));
+# lamb_pense = rev(seq(0.00001,LAMAX_lasso,length.out = LENGTH_la_lasso));
+
+lamb = exp(seq(-10,2, length.out = LENGTH_la));
+alp = exp(seq(-10,2, length.out = LENGTH_a));
+lamb_lasso = rev(exp(seq(-15,2, length.out = LENGTH_la_lasso)));
+lamb_pense = rev(exp(seq(-15,2, length.out = LENGTH_la_lasso)));
 
 L1PenHuber <- function(Y, X, lambda, alpha) {
   np = dim(X);
@@ -75,8 +80,8 @@ TuneHyperParam <- function(case, nfold, rep) {
   
   # standardize data
   Y_curr = (Y_curr - mean(Y_curr)) / sd(Y_curr)
-  for (j in 1:p) {
-    X_curr[,j] = (X_curr[,j] - mean(X_curr[,j])) / sd(X_curr[,j])
+  for (jj in 1:p) {
+    X_curr[,jj] = (X_curr[,jj] - mean(X_curr[,jj])) / sd(X_curr[,jj])
   }
   
   # assign k folds
@@ -90,7 +95,7 @@ TuneHyperParam <- function(case, nfold, rep) {
     loss1_ij = foreach (i = 1:LENGTH_la, .combine = 'cbind', .packages = c("CVXR", "Matrix"), .export = "L1PenHuber") %:%
       foreach (j = 1:LENGTH_a, .combine = 'c', .packages = c("CVXR", "Matrix"), .export ="L1PenHuber") %dopar% {
         betah = L1PenHuber(Y_curr[ii != k], X_curr[ii != k,], lamb[i], alp[j]);
-        betah = norm(matrix(Y_curr[ii == k]) - as.matrix(X_curr[ii == k,]) %*% betah, "1");
+        betah = norm(matrix(Y_curr[ii == k]) - as.matrix(X_curr[ii == k,]) %*% betah, "2");
       }
     loss1 = loss1 + t(loss1_ij)
   }
@@ -104,7 +109,7 @@ TuneHyperParam <- function(case, nfold, rep) {
     
     for (i in 1:LENGTH_la_lasso) {
       betah = matrix(a$beta[,i])
-      loss1_lasso[i] = loss1_lasso[i] + norm(matrix(Y_curr[ii == k]) - as.matrix(X_curr[ii == k,]) %*% betah, "1");
+      loss1_lasso[i] = loss1_lasso[i] + norm(matrix(Y_curr[ii == k]) - as.matrix(X_curr[ii == k,]) %*% betah, "2");
     }
   }
   
@@ -116,7 +121,7 @@ TuneHyperParam <- function(case, nfold, rep) {
     X_curr_k = as.matrix(X_curr[ii == k,])
     loss1_pense_k = foreach (i = 1:LENGTH_la_lasso, .combine = 'c', .packages = "pense") %dopar% {
       betah = pense(as.matrix(X_curr[ii != k,]), Y_curr[ii != k], alpha = 1, lambda = lamb_pense[i], intercept = FALSE)$estimates[[1]]$beta 
-      betah = norm(Y_curr_k - X_curr_k %*% betah, "1");
+      betah = norm(Y_curr_k - X_curr_k %*% betah, "2");
     }
     
     loss1_pense = loss1_pense + loss1_pense_k
@@ -243,8 +248,8 @@ for (k in 1:K) {
     l2loss_lasso[k,j] = norm(matrix(betah_lasso - beta_0), "2");
     l1loss_lasso[k,j] = norm(matrix(betah_lasso - beta_0), "1");
     temp = betah_lasso;
-    FP[k,j] = sum(temp[which(beta_0 == 0)] != 0);
-    FN[k,j] = sum(temp[which(beta_0 != 0)] == 0);
+    FP_lasso[k,j] = sum(temp[which(beta_0 == 0)] != 0);
+    FN_lasso[k,j] = sum(temp[which(beta_0 != 0)] == 0);
   }
 }
 
