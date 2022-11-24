@@ -14,7 +14,7 @@ AMAX = 1.0;  # alpha_max
 LENGTH_la = 30;  # number of lambdas used in validation
 LENGTH_la_lasso = 200;
 LENGTH_a = 15;  # number of alphas used in validation
-N = 100;  # number of validation datasets
+N = 20;  # number of validation datasets
 beta_0 = as.matrix(c(3*rep(1,20), rep(0,380)))  # true beta
 
 X_cv = read.csv('x_cv.csv');
@@ -58,7 +58,7 @@ foreach::getDoParWorkers()
 
 clusterExport(cl=my.cluster, list("n", "p", "CASE", "LAMAX", "LAMAX_lasso", "AMAX", 
                                   "LENGTH_la","LENGTH_la_lasso", "LENGTH_a", "N", "beta_0",
-                                  "XV", "YV", "lamb", "lamb_lasso", "lamb_pense", "alp"),
+                                  "X_cv", "X_lev1_cv", "X_lev2_cv", "Y_cv", "lamb", "lamb_lasso", "lamb_pense", "alp"),
               envir=environment())
 
 TuneHyperParam <- function(case, nfold, rep) {
@@ -90,7 +90,7 @@ TuneHyperParam <- function(case, nfold, rep) {
     loss1_ij = foreach (i = 1:LENGTH_la, .combine = 'cbind', .packages = c("CVXR", "Matrix"), .export = "L1PenHuber") %:%
       foreach (j = 1:LENGTH_a, .combine = 'c', .packages = c("CVXR", "Matrix"), .export ="L1PenHuber") %dopar% {
         betah = L1PenHuber(Y_curr[ii != k], X_curr[ii != k,], lamb[i], alp[j]);
-        betah = norm(Matrix(Y_curr[ii == k]) - as.matrix(X_curr[ii == k,]) %*% betah, "1");
+        betah = norm(matrix(Y_curr[ii == k]) - as.matrix(X_curr[ii == k,]) %*% betah, "1");
       }
     loss1 = loss1 + t(loss1_ij)
   }
@@ -99,12 +99,12 @@ TuneHyperParam <- function(case, nfold, rep) {
   loss1_lasso = matrix(0, LENGTH_la_lasso);
   for (k in 1:nfold) {
     print(k)
-    a <- glmnet(x = as.matrix(X_curr[ii != k,]), y = Matrix(Y_curr[ii != k]),
+    a <- glmnet(x = as.matrix(X_curr[ii != k,]), y = matrix(Y_curr[ii != k]),
                 family = "gaussian", alpha = 1, lambda = lamb_lasso, intercept = FALSE)
     
     for (i in 1:LENGTH_la_lasso) {
-      betah = Matrix(a$beta[,i])
-      loss1_lasso[i] = loss1_lasso[i] + norm(Matrix(Y_curr[ii == k]) - as.matrix(X_curr[ii == k,]) %*% betah, "1");
+      betah = matrix(a$beta[,i])
+      loss1_lasso[i] = loss1_lasso[i] + norm(matrix(Y_curr[ii == k]) - as.matrix(X_curr[ii == k,]) %*% betah, "1");
     }
   }
   
@@ -112,7 +112,7 @@ TuneHyperParam <- function(case, nfold, rep) {
   loss1_pense = matrix(0, LENGTH_la_lasso);
   for (k in 1:nfold) {
     print(k)
-    Y_curr_k = Matrix(Y_curr[ii == k])
+    Y_curr_k = matrix(Y_curr[ii == k])
     X_curr_k = as.matrix(X_curr[ii == k,])
     loss1_pense_k = foreach (i = 1:LENGTH_la_lasso, .combine = 'c', .packages = "pense") %dopar% {
       betah = pense(as.matrix(X_curr[ii != k,]), Y_curr[ii != k], alpha = 1, lambda = lamb_pense[i], intercept = FALSE)$estimates[[1]]$beta 
@@ -134,7 +134,7 @@ TuneHyperParam <- function(case, nfold, rep) {
 }
 
 # compute metrics
-K=100;
+K=20;
 CASE=5;
 
 l2loss = matrix(0,K,CASE);
@@ -161,10 +161,10 @@ beta_0_copy = beta_0
 for (k in 1:K) {
   for (j in 1:CASE) {
     print(c(k,j))
-    if (case <= 3) {
+    if (j <= 3) {
       X_curr = X_cv[(n*(k-1)+1):(n*k),]
       Y_curr = Y_cv[(n*(k-1)+1):(n*k), j]
-    } else if (case == 4) {
+    } else if (j == 4) {
       X_curr = X_lev1_cv[(n*(k-1)+1):(n*k),]
       Y_curr = Y_cv[(n*(k-1)+1):(n*k), j]
     } else {
@@ -186,7 +186,7 @@ for (k in 1:K) {
     mean_sd[1,1] = mean(Y_curr)
     mean_sd[2,1] = sd(Y_curr)
     Y_curr = (Y_curr - mean_sd[1,1]) / mean_sd[2,1]
-    Y_curr = Matrix(Y_curr)
+    Y_curr = matrix(Y_curr)
     
     for (jj in 1:p) {
       mean_sd[1,jj+1] = mean(X_curr[,jj])
@@ -224,24 +224,24 @@ for (k in 1:K) {
     }
 
     # compute metric
-    l2loss[k,j] = norm(Matrix(betah_ra - beta_0), "2");
-    l1loss[k,j] = norm(Matrix(betah_ra - beta_0), "1");
+    l2loss[k,j] = norm(matrix(betah_ra - beta_0), "2");
+    l1loss[k,j] = norm(matrix(betah_ra - beta_0), "1");
     temp = betah_ra;
     FP[k,j] = sum(temp[which(beta_0 == 0)] != 0);
     FN[k,j] = sum(temp[which(beta_0 != 0)] == 0);
-    RA_1[k,j] = (norm(Matrix(betah_lasso - beta_0), "2") - norm(Matrix(beta_oracle) - beta_0, "2")) / (norm(Matrix(betah_ra - beta_0), "2") - norm(Matrix(beta_oracle - beta_0), "2"))
-    RA_2[k,j] = (norm(Matrix(betah_lasso - beta_0), "1") - norm(Matrix(beta_oracle) - beta_0, "1")) / (norm(Matrix(betah_ra - beta_0), "1") - norm(Matrix(beta_oracle - beta_0), "1"))
+    RA_1[k,j] = (norm(matrix(betah_lasso - beta_0), "2") - norm(matrix(beta_oracle) - beta_0, "2")) / (norm(matrix(betah_ra - beta_0), "2") - norm(matrix(beta_oracle - beta_0), "2"))
+    RA_2[k,j] = (norm(matrix(betah_lasso - beta_0), "1") - norm(matrix(beta_oracle) - beta_0, "1")) / (norm(matrix(betah_ra - beta_0), "1") - norm(matrix(beta_oracle - beta_0), "1"))
     
-    l2loss_pense[k,j] = norm(Matrix(betah_pense - beta_0), "2");
-    l1loss_pense[k,j] = norm(Matrix(betah_pense - beta_0), "1");
+    l2loss_pense[k,j] = norm(matrix(betah_pense - beta_0), "2");
+    l1loss_pense[k,j] = norm(matrix(betah_pense - beta_0), "1");
     temp = betah_pense;
     FP_pense[k,j] = sum(temp[which(beta_0 == 0)] != 0);
     FN_pense[k,j] = sum(temp[which(beta_0 != 0)] == 0);
-    RA_1_pense[k,j] = (norm(Matrix(betah_lasso - beta_0), "2") - norm(Matrix(beta_oracle - beta_0), "2")) / (norm(Matrix(betah_pense - beta_0), "2") - norm(Matrix(beta_oracle - beta_0), "2"))
-    RA_2_pense[k,j] = (norm(Matrix(betah_lasso - beta_0), "1") - norm(Matrix(beta_oracle - beta_0), "1")) / (norm(Matrix(betah_pense - beta_0), "1") - norm(Matrix(beta_oracle - beta_0), "1"))
+    RA_1_pense[k,j] = (norm(matrix(betah_lasso - beta_0), "2") - norm(matrix(beta_oracle - beta_0), "2")) / (norm(matrix(betah_pense - beta_0), "2") - norm(matrix(beta_oracle - beta_0), "2"))
+    RA_2_pense[k,j] = (norm(matrix(betah_lasso - beta_0), "1") - norm(matrix(beta_oracle - beta_0), "1")) / (norm(matrix(betah_pense - beta_0), "1") - norm(matrix(beta_oracle - beta_0), "1"))
     
-    l2loss_lasso[k,j] = norm(Matrix(betah_lasso - beta_0), "2");
-    l1loss_lasso[k,j] = norm(Matrix(betah_lasso - beta_0), "1");
+    l2loss_lasso[k,j] = norm(matrix(betah_lasso - beta_0), "2");
+    l1loss_lasso[k,j] = norm(matrix(betah_lasso - beta_0), "1");
     temp = betah_lasso;
     FP[k,j] = sum(temp[which(beta_0 == 0)] != 0);
     FN[k,j] = sum(temp[which(beta_0 != 0)] == 0);

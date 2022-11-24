@@ -1,6 +1,6 @@
 # setwd("~/simulation")
 set.seed(2022)
-N = 100
+N = 20
 n = 100
 contaminated = 10
 p = 400
