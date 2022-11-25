@@ -33,8 +33,6 @@ In this section, we begin by reproducing a subset of the simulation studies in T
 $ $\newline
 \cref{tab:reproduce} shows the mean error metrics for three of the error distributions from Table 2 of \citet{fan2017estimation} using LASSO and RA-lasso. Here we follow the setup in the original code of the paper as much as we can. Specifically, to perform hyperparameter tuning, a $2d$ grid of $15$ equally spaced $\alpha$ values ranging from $0.0001$ to $1$ and $30$ equally spaced $\lambda$ values ranging from $0.0001$ to $1.5$ are used. Since the sequence of $\lambda$ values used to tune LASSO is not provided by the authors, a sequence of $200$ values ranging from $0.00001$ to $10$ is used. This sequence is chosen because the number of candidate hyperparameter values is on the same order of magnitude of the total sets of hyperparameters tested for RA-lasso. At the same time, the spacing between the candidate $\lambda$ values for LASSO and RA-lasso are both kept to be around $0.05$. Note that to solve the (convex) optimization problem in order to get the RA-lasso estimates, the \texttt{CVXR} package in \texttt{R} is used. This is an equivalent package of \texttt{CVX} in \texttt{MATLAB}, which is used in the code to generate the results in the paper. The \texttt{glmnet} package is used to obtain the LASSO estimates. In addition to the mean values, the corresponding $5^\text{th}$ and $95^\text{th}$ percentiles as a measure of uncertainty are also reported. We note that, similar to Table 2 in \citet{fan2017estimation}, LASSO and RA-lasso perform similarly across all three scenarios.
 
-
-
 \begin{table}[]
 \centering
 \begin{tabular}{llllllll}
@@ -72,3 +70,19 @@ Lev2   & L2-loss & 5.3    & (2.99, 6.73)     & 2.92     & (1.44, 7.07)     & 7.9
 \end{tabular}
 \caption{Additonal simulation results for lasso, RA lasso, and PENSE}\label{tab:revised}
 \end{table}
+
+$ $\newline
+We now revise the simulation study to address some of the issues discussed in \cref{sec:relevance}. Firstly, in addition to LASSO and RA-lasso, we also add another robust regression estimator PENSE, as a competitor to RA-lasso, to the comparison \citep{freue2019robust}. Furthermore, instead of conducting hyperparameter tuning using independent validation sets and the L2-loss between the true regression parameters and the estimates, we use a 5-fold cross validation with the mean-squared error between the true and fitted responses.
+
+$ $\newline
+In terms of the sequence of hyperparameters, instead of setting the range of $\alpha$ and $\lambda$ values somewhat arbitrarily ($0.0001$ to $1$ and $0.0001$ to $1.5$, respectively), as is done in the authors' original code, we follow the guideline in Section 2 of \cref{sec:relevance} and use a sequence of hyperparameters that are equidistant in log scale. Specifically, $15$ $\lambda$ values ranging from $e^{-15}$ to $e^2$ are used for LASSO and PENSE, and the same sequence of $\alpha$ and $\lambda$ values ranging from $e^{-10}$ to $e^2$ are used for RA-lasso. These values are chosen so that the minimum value in each sequence is as small as possible without causing numerical issues. This is a typical approach given any problem in practice: by setting the sequence to be eqidistant in log scale, we can explore hyperparameters in a wide range of orders of magnitude.
+
+$ $\newline
+We also expand the simulation study by including two scenarios with various degrees of high leverage observations (unusual covariates) to check the robusteness of RA-lasso. We follow the procedure in \citet{maronna2011robust} and contaminate $10\%$ of the observations in each dataset. Specifically, we replace the predictors $x_i$ with
+\begin{align}
+\tilde{x}_i = \eta_i + \frac{k_\text{lev}}{\sqrt{a^Ta}}a, \label{eq:perturb}
+\end{align}
+where $\eta_i \sim N(0, 0.1^2I_p)$ and $a = \tilde{a} - \frac{1}{p}\tilde{a}^T\bm{1}_p$ with the entries of $\tilde{a}$ following $\text{Unif}(\{-1, 1\})$. The error distributions in these cases are set to $N(0,1)$. We also change the error distribution in the second scenario from $2t_3$ to $t_2$ in order to make the heavy-tailedness more pronounced. Finally, instead of centring the error distributions by their empirical average, we centre them using their analytical mean.
+
+$ $\newline
+\cref{tab:revised} shows the mean error metrics and their $5^\text{th}$ and $95^\text{th}$ percentiles for each scenario of the revised simulation study. Note that \texttt{lev1} and \texttt{lev2} in the table correspond to $k_\text{lev}=1$ and $k_\text{lev}=2$ in \cref{eq:perturb}, respectively. Also note that due to computational constraints, these values are based on $20$ instead of $100$ trials. We see that across all five scenarios, RA-lasso 
