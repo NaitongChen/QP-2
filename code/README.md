@@ -4,4 +4,4 @@
 
 # improved simulation studies
 
-* `improved/generate_data_new.R` generates synthetic data, `improved/main_simulation_new.R` runs the simulation study, `improved/generate_metric_new.R` computes the error metrics.`improved`
+* `improved/generate_data_new.R` generates synthetic data, `improved/main_simulation_new.R` runs the simulation study, `improved/generate_metric_new.R` computes the error metrics.
